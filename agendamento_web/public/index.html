@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agendamento de Serviços</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+
+  <h1 class="text-3xl font-bold mb-6">Agendamento de Serviços</h1>
+
+  <!-- Filtros -->
+  <div class="w-full max-w-4xl mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <input id="filtroData" type="date" class="p-2 border rounded w-full" placeholder="Filtrar por data" />
+    <input id="filtroServico" type="text" class="p-2 border rounded w-full" placeholder="Filtrar por serviço" />
+  </div>
+
+  <!-- Formulário -->
+  <form id="formAgendamento" class="w-full max-w-4xl bg-white p-4 rounded shadow mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <input name="cliente" type="text" placeholder="Nome do Cliente" class="p-2 border rounded" required />
+    <input name="servico" type="text" placeholder="Serviço" class="p-2 border rounded" required />
+    <input name="data" type="date" class="p-2 border rounded" required />
+    <input name="horario" type="time" class="p-2 border rounded" required />
+    <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded col-span-2">Salvar Agendamento</button>
+  </form>
+
+  <!-- Tabela -->
+  <div class="w-full max-w-4xl bg-white shadow-md rounded-lg p-4 overflow-x-auto">
+    <table class="table-auto w-full border-collapse">
+      <thead>
+        <tr class="bg-blue-500 text-white">
+          <th class="px-4 py-2 text-left">Cliente</th>
+          <th class="px-4 py-2 text-left">Serviço</th>
+          <th class="px-4 py-2 text-left">Data</th>
+          <th class="px-4 py-2 text-left">Horário</th>
+          <th class="px-4 py-2">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="agenda-body" class="text-gray-700">
+        <!-- Dados aqui -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_URL = 'http://192.168.0.133:1010/agendamentos?codigoLoja=6&codigoFuncionario=7&dataInicial=01/01/2025&dataFinal=12/12/2025'; // substitua pela sua URL real
+
+    let agendamentos = [];
+    let editandoId = null;
+
+    async function carregarAgendamentos() {
+      try {
+        const res = await fetch(API_URL);
+        agendamentos = await res.json();
+        renderizarTabela();
+      } catch (err) {
+        console.error('Erro ao carregar agendamentos:', err);
+      }
+    }
+
+    function renderizarTabela() {
+      const tbody = document.getElementById('agenda-body');
+      const filtroData = document.getElementById('filtroData').value;
+      const filtroServico = document.getElementById('filtroServico').value.toLowerCase();
+
+      tbody.innerHTML = '';
+      agendamentos
+        .filter(ag =>
+          (!filtroData || ag.data === filtroData) &&
+          (!filtroServico || ag.servico.toLowerCase().includes(filtroServico))
+        )
+        .forEach(ag => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-4 py-2">${ag.codigoLoja}</td>
+            <td class="px-4 py-2">${ag.codigoFuncionario}</td>
+            <td class="px-4 py-2">${ag.data}</td>
+            <td class="px-4 py-2">${ag.hora}</td>
+            <td class="px-4 py-2 space-x-2">
+              <button onclick="editarAgendamento('${ag.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
+              <button onclick="excluirAgendamento('${ag.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+    }
+
+    document.getElementById('formAgendamento').addEventListener('submit', async e => {
+      e.preventDefault();
+      const form = e.target;
+      const novoAgendamento = {
+        cliente: form.cliente.value,
+        servico: form.servico.value,
+        data: form.data.value,
+        horario: form.horario.value
+      };
+
+      try {
+        if (editandoId) {
+          await fetch(`${API_URL}/${editandoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(novoAgendamento)
+          });
+          editandoId = null;
+        } else {
+          await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(novoAgendamento)
+          });
+        }
+        form.reset();
+        carregarAgendamentos();
+      } catch (err) {
+        console.error('Erro ao salvar:', err);
+      }
+    });
+
+    async function excluirAgendamento(id) {
+      if (!confirm('Deseja realmente excluir?')) return;
+      try {
+        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        carregarAgendamentos();
+      } catch (err) {
+        console.error('Erro ao excluir:', err);
+      }
+    }
+
+    function editarAgendamento(id) {
+      const ag = agendamentos.find(a => a.id === id);
+      if (ag) {
+        const form = document.getElementById('formAgendamento');
+        form.cliente.value = ag.cliente;
+        form.servico.value = ag.servico;
+        form.data.value = ag.data;
+        form.horario.value = ag.horario;
+        editandoId = id;
+      }
+    }
+
+    document.getElementById('filtroData').addEventListener('input', renderizarTabela);
+    document.getElementById('filtroServico').addEventListener('input', renderizarTabela);
+
+    carregarAgendamentos();
+  </script>
+
+</body>
+</html>
