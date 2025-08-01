@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Agendamento de Serviços</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
 
   <h1 class="text-3xl font-bold mb-6">Agendamento de Serviços</h1>
+
+  <!-- ComboBox de Lojas preenchido via REST -->
+  <div class="w-full max-w-4xl mb-4">
+    <select id="comboLojas" class="p-2 border rounded w-full">
+      <option value="">Selecione uma loja</option>
+      <!-- Opções serão preenchidas via JS -->
+    </select>
+  </div>
 
   <!-- Filtros -->
   <div class="w-full max-w-4xl mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -16,14 +26,45 @@
     <input id="filtroServico" type="text" class="p-2 border rounded w-full" placeholder="Filtrar por serviço" />
   </div>
 
+
   <!-- Formulário -->
-  <form id="formAgendamento" class="w-full max-w-4xl bg-white p-4 rounded shadow mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+  <form id="formAgendamento"
+    class="w-full max-w-4xl bg-white p-4 rounded shadow mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
     <input name="cliente" type="text" placeholder="Nome do Cliente" class="p-2 border rounded" required />
-    <input name="servico" type="text" placeholder="Serviço" class="p-2 border rounded" required />
+    <!-- ComboBox para Serviço alimentado por REST -->
+    <select name="servico" id="comboServicos" class="p-2 border rounded" required>
+      <option value="">Selecione um serviço</option>
+      <!-- Opções serão preenchidas via JS -->
+    </select>
+    <!-- Após o combo de serviços, adicione o combo de funcionário -->
+    <select name="funcionario" id="comboFuncionarios" class="p-2 border rounded" required>
+      <option value="">Selecione um funcionário</option>
+      <!-- Opções serão preenchidas via JS -->
+    </select>
     <input name="data" type="date" class="p-2 border rounded" required />
-    <input name="horario" type="time" class="p-2 border rounded" required />
-    <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded col-span-2">Salvar Agendamento</button>
+    <!-- <input name="horario" type="time" class="p-2 border rounded" required step="3600" /> -->
+    <select name="horario" id="comboHorario" class="p-2 border rounded" required>
+      <option value="">Selecione o horário</option>
+      <option value="08:00">07:00</option>
+      <option value="08:00">08:00</option>
+      <option value="09:00">09:00</option>
+      <option value="10:00">10:00</option>
+      <option value="11:00">11:00</option>
+      <option value="12:00">12:00</option>
+      <option value="13:00">13:00</option>
+      <option value="14:00">14:00</option>
+      <option value="15:00">15:00</option>
+      <option value="16:00">16:00</option>
+      <option value="17:00">17:00</option>
+      <option value="18:00">18:00</option>
+      <option value="18:00">19:00</option>
+      <option value="18:00">20:00</option>
+      <option value="18:00">21:00</option>
+    </select>
+    <button onclick="salvarAgendamentoPersonalizado()" type="submit"
+      class="bg-blue-500 text-white py-2 px-4 rounded col-span-2">Salvar Agendamento</button>
   </form>
+
 
   <!-- Tabela -->
   <div class="w-full max-w-4xl bg-white shadow-md rounded-lg p-4 overflow-x-auto">
@@ -34,6 +75,7 @@
           <th class="px-4 py-2 text-left">Serviço</th>
           <th class="px-4 py-2 text-left">Data</th>
           <th class="px-4 py-2 text-left">Horário</th>
+          <th class="px-4 py-2 text-left">Descrição</th>
           <th class="px-4 py-2">Ações</th>
         </tr>
       </thead>
@@ -44,16 +86,60 @@
   </div>
 
   <script>
-    const API_URL = 'http://192.168.0.133:1010/agendamentos?codigoLoja=6&codigoFuncionario=7&dataInicial=01/01/2025&dataFinal=12/12/2025'; // substitua pela sua URL real
+    // Variáveis globais 
 
     let agendamentos = [];
     let editandoId = null;
 
-    async function carregarAgendamentos() {
+
+
+    async function carregarAgendamentos(codigoloja, codigoFuncionario, dataInicioSemanaParam, dataFinalSemanaParam) {
+
+
       try {
-        const res = await fetch(API_URL);
-        agendamentos = await res.json();
-        renderizarTabela();
+        if (dataFinalSemanaParam == null && dataInicioSemanaParam == null) {
+          // Calcula a data do início da semana (domingo) no formato MM/DD/YYYY
+          const hoje = new Date();
+          const diaSemana = hoje.getDay(); // 0 (domingo) a 6 (sábado)
+          const dataInicioSemanaObj = new Date(hoje);
+          dataInicioSemanaObj.setDate(hoje.getDate() - diaSemana);
+          const dataInicioSemana = [
+            String(dataInicioSemanaObj.getMonth() + 1).padStart(2, '0'),
+            String(dataInicioSemanaObj.getDate()).padStart(2, '0'),
+            dataInicioSemanaObj.getFullYear()
+          ].join('/');
+
+          // Calcula a data do final da semana (sábado) no formato MM/DD/YYYY
+          const dataFinalSemanaObj = new Date(hoje);
+          dataFinalSemanaObj.setDate(hoje.getDate() + (6 - diaSemana));
+          const dataFinalSemana = [
+            String(dataFinalSemanaObj.getMonth() + 1).padStart(2, '0'),
+            String(dataFinalSemanaObj.getDate()).padStart(2, '0'),
+            dataFinalSemanaObj.getFullYear()
+          ].join('/');
+          console.log('Data Inicial:', dataInicioSemana);
+          console.log('Data Final:', dataFinalSemana);
+          const API_URL = 'http://127.0.0.1:1010/agendamentos?codigoLoja=' + codigoloja + '&codigoFuncionario=7&dataInicial=' + dataInicioSemana + '&dataFinal=' + dataFinalSemana;
+          console.log('API_URL:', API_URL);
+          const res = await fetch(API_URL);
+          try {
+            agendamentos = await res.json();
+          } catch (error) {
+            agendamentos = [];
+            //console.error('Erro ao converter resposta JSON:', error);
+          }
+          renderizarTabela();
+        } else {
+          console.log('Data Inicial Param:', dataInicioSemanaParam);
+          console.log('Data Final Param:', dataFinalSemanaParam);
+          API_URL = 'http://127.0.0.1:1010/agendamentos?codigoLoja=' + codigoloja + '&codigoFuncionario=7&dataInicial=' + dataInicioSemanaParam + '&dataFinal=' + dataFinalSemanaParam;
+          console.log('API_URLParam:', API_URL);
+          const res = await fetch(API_URL);
+          agendamentos = await res.json();
+          renderizarTabela();
+        }
+
+
       } catch (err) {
         console.error('Erro ao carregar agendamentos:', err);
       }
@@ -64,26 +150,31 @@
       const filtroData = document.getElementById('filtroData').value;
       const filtroServico = document.getElementById('filtroServico').value.toLowerCase();
 
+      // Converte filtroData para DD/MM/YYYY se houver valor
+      let filtroDataFormatada = '';
+      if (filtroData) {
+        const [ano, mes, dia] = filtroData.split('-');
+        filtroDataFormatada = `${dia}/${mes}/${ano}`;
+      }
+
       tbody.innerHTML = '';
       agendamentos
         .filter(ag =>
-          (!filtroData || ag.data === filtroData) &&
+          (!filtroDataFormatada || ag.data === filtroDataFormatada) &&
           (!filtroServico || ag.servico.toLowerCase().includes(filtroServico))
         )
         .forEach(ag => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td class="px-4 py-2">${ag.codigoLoja}</td>
-            <td class="px-4 py-2">${ag.codigoFuncionario}</td>
+            <td class="px-4 py-2">${ag.nomeCliente}</td>
+            <td class="px-4 py-2">${ag.nomeFuncionario}</td>
             <td class="px-4 py-2">${ag.data}</td>
             <td class="px-4 py-2">${ag.hora}</td>
-            <td class="px-4 py-2 space-x-2">
-              <button onclick="editarAgendamento('${ag.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
-              <button onclick="excluirAgendamento('${ag.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
-            </td>
+            <td class="px-4 py-2">${ag.descricao}</td>
           `;
           tbody.appendChild(tr);
         });
+      console.log('Tabela renderizada com', agendamentos.length, 'agendamentos');
     }
 
     document.getElementById('formAgendamento').addEventListener('submit', async e => {
@@ -112,7 +203,7 @@
           });
         }
         form.reset();
-        carregarAgendamentos();
+        carregarAgendamentos(null, null, null, null);
       } catch (err) {
         console.error('Erro ao salvar:', err);
       }
@@ -122,7 +213,7 @@
       if (!confirm('Deseja realmente excluir?')) return;
       try {
         await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        carregarAgendamentos();
+        carregarAgendamentos(null, null, null, null);
       } catch (err) {
         console.error('Erro ao excluir:', err);
       }
@@ -140,11 +231,172 @@
       }
     }
 
+    document.getElementById('filtroData').addEventListener('change', function (e) {
+      const dataSelecionada = e.target.value; // formato: YYYY-MM-DD
+      if (dataSelecionada) {
+        const [ano, mes, dia] = dataSelecionada.split('-');
+        const dataFormatada = `${mes}/${dia}/${ano}`;
+        // carregarAgendamentos(null, null, dataFormatada, dataFormatada);
+        console.log('Data selecionada (MM/DD/YYYY):', dataFormatada);
+        // Use dataFormatada conforme necessário
+      }
+    });
+
     document.getElementById('filtroData').addEventListener('input', renderizarTabela);
     document.getElementById('filtroServico').addEventListener('input', renderizarTabela);
 
-    carregarAgendamentos();
+    // Exemplo de endpoint de lojas
+    const LOJAS_URL = 'http://127.0.0.1:1010/lojas/preencherComboLojas?status=A';
+
+    async function carregarLojas() {
+      try {
+        const res = await fetch(LOJAS_URL);
+        const lojas = await res.json();
+        const combo = document.getElementById('comboLojas');
+        combo.innerHTML = '<option value="">Selecione uma loja</option>';
+        lojas.forEach(loja => {
+          const opt = document.createElement('option');
+          opt.value = loja.id || loja.codigo || loja.nome || loja;
+          opt.textContent = loja.nome || loja.descricao || loja;
+          combo.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Erro ao carregar lojas:', err);
+      }
+    }
+
+    document.getElementById('comboLojas').addEventListener('change', function (e) {
+      // Supondo que o value seja algo como "123-Nome da Loja"
+      const valorSelecionado = e.target.value;
+      const codigoLoja = parseInt(valorSelecionado.split('-')[0], 10);
+      carregarAgendamentos(codigoLoja, null, null, null);
+    });
+
+    const SERVICOS_URL = 'http://127.0.0.1:1010/servicos/preencherComboServicos?status=A';
+
+    async function carregarServicos() {
+      try {
+        const res = await fetch(SERVICOS_URL);
+        const servicos = await res.json();
+        const combo = document.getElementById('comboServicos');
+        combo.innerHTML = '<option value="">Selecione um serviço</option>';
+        servicos.forEach(servico => {
+          const opt = document.createElement('option');
+          opt.value = servico.id || servico.codigo || servico.nome || servico;
+          opt.textContent = servico.nome || servico.descricao || servico;
+          combo.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Erro ao carregar serviços:', err);
+      }
+    }
+
+    const FUNCIONARIOS_URL = 'http://127.0.0.1:1010/funcionarios/preencherComboFuncionarios?status=A&codigoLoja=6';
+
+    async function carregarFuncionarios() {
+      try {
+        const res = await fetch(FUNCIONARIOS_URL);
+        const funcionarios = await res.json();
+        const combo = document.getElementById('comboFuncionarios');
+        combo.innerHTML = '<option value="">Selecione um funcionário</option>';
+        funcionarios.forEach(funcionario => {
+          const opt = document.createElement('option');
+          opt.value = funcionario.id || funcionario.codigo || funcionario.nome || funcionario;
+          opt.textContent = funcionario.nome || funcionario.descricao || funcionario;
+          combo.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Erro ao carregar funcionários:', err);
+      }
+    }
+
+    // Chame ao iniciar
+
+
+    document.getElementById('comboLojas').addEventListener('change', function (e) {
+      // Supondo que o value seja algo como "123-Nome da Loja"
+      const valorSelecionado = e.target.value;
+      const codigoLoja = parseInt(valorSelecionado.split('-')[0], 10);
+      carregarAgendamentos(codigoLoja, null, null, null);
+    });
+
+    async function salvarAgendamentoPersonalizado(codigoFuncionario, dataAgendamento, horaAgendamento, codigoloja, servicoSelecionado) {
+      const API_URL = 'http://127.0.0.1:1010/agendamentos/realizarAgendamento';
+
+      // Pega o valor selecionado do comboFuncionarios e converte o primeiro valor para inteiro
+      const funcionarioSelecionado = document.getElementById('comboFuncionarios').value;
+      codigoFuncionario = parseInt(funcionarioSelecionado.split('-')[0], 10);
+
+      // Pega o valor do input de data e converte para MM-DD-YYYY
+      const dataInput = document.querySelector('input[name="data"]').value; // formato YYYY-MM-DD
+      dataAgendamento = '';
+      if (dataInput) {
+        const [ano, mes, dia] = dataInput.split('-');
+        dataAgendamento = `${mes}-${dia}-${ano}`;
+      }
+
+      // Pega o valor do input de hora no formato HH:mm
+      horaAgendamento = document.getElementById('comboHorario').value;
+
+      // Pega o valor selecionado do comboLojas e converte o primeiro valor para inteiro
+      const lojaSelecionada = document.getElementById('comboLojas').value;
+      codigoloja = parseInt(lojaSelecionada.split('-')[0], 10);
+
+      // Pega o texto salvo no comboServico
+      const comboServicos = document.getElementById('comboServicos');
+      const nomeCliente = document.querySelector('input[name="cliente"]').value;
+      servicoSelecionado = comboServicos.options[comboServicos.selectedIndex].text + ' - ' + nomeCliente;
+
+      if (!codigoFuncionario || !dataAgendamento || !horaAgendamento || !codigoloja || !servicoSelecionado) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+      }
+      const body = {
+        "codigoAgendamento": 0,
+        "codigoFuncionario": codigoFuncionario,
+        "codigoCliente": 0,
+        "data": dataAgendamento,// "07-01-2025"
+        "hora": horaAgendamento,
+        "isAtivo": "S",
+        "codigoLoja": codigoloja,
+        "colunaDia": 100,
+        "colunaHora": 100,
+        "descricao": servicoSelecionado
+      };
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (res.ok) {
+          alert('Agendamento salvo com sucesso!');
+          atualizarTela();
+         
+        } else {
+          alert('Erro ao salvar agendamento!');
+        }
+      } catch (err) {
+        console.error('Erro ao salvar agendamento:', err);
+        alert('Erro ao salvar agendamento!');
+      }
+    }
+
+    function atualizarTela() {
+      // Atualiza os combos e a tabela de agendamentos
+      carregarLojas();
+      carregarServicos();
+      carregarFuncionarios();
+      carregarAgendamentos(null, null, null, null);
+      renderizarTabela();
+    }
+
+    carregarLojas();
+    carregarServicos();
+    carregarFuncionarios();
   </script>
 
 </body>
+
 </html>
