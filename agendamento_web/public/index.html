@@ -45,21 +45,6 @@
     <!-- <input name="horario" type="time" class="p-2 border rounded" required step="3600" /> -->
     <select name="horario" id="comboHorario" class="p-2 border rounded" required>
       <option value="">Selecione o horário</option>
-      <option value="08:00">07:00</option>
-      <option value="08:00">08:00</option>
-      <option value="09:00">09:00</option>
-      <option value="10:00">10:00</option>
-      <option value="11:00">11:00</option>
-      <option value="12:00">12:00</option>
-      <option value="13:00">13:00</option>
-      <option value="14:00">14:00</option>
-      <option value="15:00">15:00</option>
-      <option value="16:00">16:00</option>
-      <option value="17:00">17:00</option>
-      <option value="18:00">18:00</option>
-      <option value="18:00">19:00</option>
-      <option value="18:00">20:00</option>
-      <option value="18:00">21:00</option>
     </select>
     <button onclick="salvarAgendamentoPersonalizado()" type="submit"
       class="bg-blue-500 text-white py-2 px-4 rounded col-span-2">Salvar Agendamento</button>
@@ -242,14 +227,21 @@
       }
     });
 
+    document.getElementById('comboFuncionarios').addEventListener('change', function (e) {
+
+      carregarHorarios();
+    }
+    );
+
     document.getElementById('filtroData').addEventListener('input', renderizarTabela);
     document.getElementById('filtroServico').addEventListener('input', renderizarTabela);
 
     // Exemplo de endpoint de lojas
-    const LOJAS_URL = 'http://127.0.0.1:1010/lojas/preencherComboLojas?status=A';
 
     async function carregarLojas() {
       try {
+        const LOJAS_URL = 'http://127.0.0.1:1010/lojas/preencherComboLojas?status=A';
+
         const res = await fetch(LOJAS_URL);
         const lojas = await res.json();
         const combo = document.getElementById('comboLojas');
@@ -265,17 +257,65 @@
       }
     }
 
+
+
+
+    async function carregarHorarios() {
+      try {
+        const valorSelecionadoLoja = document.getElementById('comboLojas').value;
+        const codigoLoja = parseInt(valorSelecionadoLoja.split('-')[0], 10);
+        const valorSelecionadoFuncionario = document.getElementById('comboFuncionarios').value;
+        const codigoFuncionario = parseInt(valorSelecionadoFuncionario.split('-')[0], 10);
+        // const codigoDescricao = parseInt(valorSelecionadoFuncionario.split('-')[0], 10);
+        const valorSelecionadoData = document.querySelector('input[name="data"]').value; 
+        if (valorSelecionadoData) {
+        const [ano, mes, dia] = valorSelecionadoData.split('-');
+        dataAgendamento = `${dia}-${mes}-${ano}`;
+      }
+        //const codigoFuncionario = parseInt(valorSelecionadoFuncionario.split('-')[0], 10);
+        const HORARIOS_URL = 'http://127.0.0.1:1010/horarios/listarHorariosDisponiveis?codigoFuncionario=' + codigoFuncionario + '&codigoLoja=' + codigoLoja + '&data=' + dataAgendamento;
+
+        const res = await fetch(HORARIOS_URL);
+        const lojas = await res.json();
+        const combo = document.getElementById('comboHorario');
+        combo.innerHTML = '<option value="">Selecione um horário</option>';
+        lojas.forEach(loja => {
+          const opt = document.createElement('option');
+          opt.value = loja.id || loja.codigo || loja.nome || loja;
+          opt.textContent = loja.nome || loja.descricao || loja;
+          combo.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Erro ao carregar horários:', err);
+      }
+    }
+
+    document.getElementById('comboHorario').addEventListener('change', function (e) {
+      // Supondo que o value seja algo como "123-Nome da Loja"
+      const combo = document.getElementById('comboHorario');
+      const valorSelecionado = e.target.value;
+      if (!valorSelecionado || valorSelecionado.includes("Reservado")) {
+        alert('Por favor, selecione um horário válido.');
+        combo.selectedIndex = 0; // Reseta o combo para a opção padrão
+        return;
+      }
+
+    });
+
     document.getElementById('comboLojas').addEventListener('change', function (e) {
       // Supondo que o value seja algo como "123-Nome da Loja"
       const valorSelecionado = e.target.value;
       const codigoLoja = parseInt(valorSelecionado.split('-')[0], 10);
       carregarAgendamentos(codigoLoja, null, null, null);
+      carregarFuncionarios();
     });
 
-    const SERVICOS_URL = 'http://127.0.0.1:1010/servicos/preencherComboServicos?status=A';
 
     async function carregarServicos() {
       try {
+
+        const SERVICOS_URL = 'http://127.0.0.1:1010/servicos/preencherComboServicos?status=A';
+
         const res = await fetch(SERVICOS_URL);
         const servicos = await res.json();
         const combo = document.getElementById('comboServicos');
@@ -291,10 +331,13 @@
       }
     }
 
-    const FUNCIONARIOS_URL = 'http://127.0.0.1:1010/funcionarios/preencherComboFuncionarios?status=A&codigoLoja=6';
 
     async function carregarFuncionarios() {
       try {
+        const valorSelecionado = document.getElementById('comboLojas').value;
+        const codigoLoja = parseInt(valorSelecionado.split('-')[0], 10);
+        const FUNCIONARIOS_URL = 'http://127.0.0.1:1010/funcionarios/preencherComboFuncionarios?status=A&codigoLoja=' + codigoLoja;
+
         const res = await fetch(FUNCIONARIOS_URL);
         const funcionarios = await res.json();
         const combo = document.getElementById('comboFuncionarios');
@@ -373,7 +416,7 @@
         if (res.ok) {
           alert('Agendamento salvo com sucesso!');
           atualizarTela();
-         
+
         } else {
           alert('Erro ao salvar agendamento!');
         }
@@ -386,15 +429,15 @@
     function atualizarTela() {
       // Atualiza os combos e a tabela de agendamentos
       carregarLojas();
+      carregarHorarios();
       carregarServicos();
-      carregarFuncionarios();
       carregarAgendamentos(null, null, null, null);
       renderizarTabela();
     }
 
     carregarLojas();
     carregarServicos();
-    carregarFuncionarios();
+
   </script>
 
 </body>
