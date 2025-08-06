@@ -267,11 +267,11 @@
         const valorSelecionadoFuncionario = document.getElementById('comboFuncionarios').value;
         const codigoFuncionario = parseInt(valorSelecionadoFuncionario.split('-')[0], 10);
         // const codigoDescricao = parseInt(valorSelecionadoFuncionario.split('-')[0], 10);
-        const valorSelecionadoData = document.querySelector('input[name="data"]').value; 
+        const valorSelecionadoData = document.querySelector('input[name="data"]').value;
         if (valorSelecionadoData) {
-        const [ano, mes, dia] = valorSelecionadoData.split('-');
-        dataAgendamento = `${dia}-${mes}-${ano}`;
-      }
+          const [ano, mes, dia] = valorSelecionadoData.split('-');
+          dataAgendamento = `${dia}-${mes}-${ano}`;
+        }
         //const codigoFuncionario = parseInt(valorSelecionadoFuncionario.split('-')[0], 10);
         const HORARIOS_URL = 'http://127.0.0.1:1010/horarios/listarHorariosDisponiveis?codigoFuncionario=' + codigoFuncionario + '&codigoLoja=' + codigoLoja + '&data=' + dataAgendamento;
 
@@ -428,6 +428,8 @@
 
     function atualizarTela() {
       // Atualiza os combos e a tabela de agendamentos
+      const comboFuncionarios = document.getElementById('comboFuncionarios');
+      comboFuncionarios.selectedIndex = 0;
       carregarLojas();
       carregarHorarios();
       carregarServicos();
