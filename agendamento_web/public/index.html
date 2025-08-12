@@ -43,9 +43,14 @@
     </select>
     <input name="data" type="date" class="p-2 border rounded" required />
     <!-- <input name="horario" type="time" class="p-2 border rounded" required step="3600" /> -->
-    <select name="horario" id="comboHorario" class="p-2 border rounded" required>
-      <option value="">Selecione o horário</option>
-    </select>
+    <div class="flex gap-2 items-center">
+      <select name="horario" id="comboHorario" class="p-2 border rounded w-full" required>
+        <option value="">Selecione o horário</option>
+      </select>
+      <button type="button" onclick="carregarHorarios()" class="bg-green-500 text-white px-4 py-2 rounded">
+        Visualizar horários
+      </button>
+    </div>
     <button onclick="salvarAgendamentoPersonalizado()" type="submit"
       class="bg-blue-500 text-white py-2 px-4 rounded col-span-2">Salvar Agendamento</button>
   </form>
@@ -81,6 +86,10 @@
     async function carregarAgendamentos(codigoloja, codigoFuncionario, dataInicioSemanaParam, dataFinalSemanaParam) {
 
 
+      if (!codigoloja || isNaN(codigoloja)) {
+        // alert('Por favor, selecione uma loja válida.');
+        return;
+      }
       try {
         if (dataFinalSemanaParam == null && dataInicioSemanaParam == null) {
           // Calcula a data do início da semana (domingo) no formato MM/DD/YYYY
@@ -104,7 +113,7 @@
           ].join('/');
           console.log('Data Inicial:', dataInicioSemana);
           console.log('Data Final:', dataFinalSemana);
-          const API_URL = 'http://127.0.0.1:1010/agendamentos?codigoLoja=' + codigoloja + '&codigoFuncionario=7&dataInicial=' + dataInicioSemana + '&dataFinal=' + dataFinalSemana;
+          const API_URL = 'http://127.0.0.1:1010/agendamentos?codigoLoja=' + codigoloja + '&codigoFuncionario=000&dataInicial=' + dataInicioSemana + '&dataFinal=' + dataFinalSemana;
           console.log('API_URL:', API_URL);
           const res = await fetch(API_URL);
           try {
@@ -229,7 +238,7 @@
 
     document.getElementById('comboFuncionarios').addEventListener('change', function (e) {
 
-      carregarHorarios();
+      //carregarHorarios();
     }
     );
 
@@ -261,6 +270,12 @@
 
 
     async function carregarHorarios() {
+      const comboLojas = document.getElementById('comboLojas');
+      if (comboLojas.selectedIndex === 0 || comboLojas.selectedIndex === 1) {
+        // alert('Por favor, selecione uma loja válida.');
+        return;
+      }
+
       try {
         const valorSelecionadoLoja = document.getElementById('comboLojas').value;
         const codigoLoja = parseInt(valorSelecionadoLoja.split('-')[0], 10);
@@ -268,6 +283,18 @@
         const codigoFuncionario = parseInt(valorSelecionadoFuncionario.split('-')[0], 10);
         // const codigoDescricao = parseInt(valorSelecionadoFuncionario.split('-')[0], 10);
         const valorSelecionadoData = document.querySelector('input[name="data"]').value;
+        if (!valorSelecionadoData) {
+          alert('Por favor, selecione uma data válida.');
+          return;
+        }
+        if (!codigoLoja || isNaN(codigoLoja)) {
+          alert('Por favor, selecione uma loja válida.');
+          return;
+        }
+        if (!codigoFuncionario || isNaN(codigoFuncionario)) {
+          //alert('Por favor, selecione um funcionário válido.');
+          return;
+        }
         if (valorSelecionadoData) {
           const [ano, mes, dia] = valorSelecionadoData.split('-');
           dataAgendamento = `${dia}-${mes}-${ano}`;
@@ -390,7 +417,7 @@
       const nomeCliente = document.querySelector('input[name="cliente"]').value;
       servicoSelecionado = comboServicos.options[comboServicos.selectedIndex].text + ' - ' + nomeCliente;
 
-      if (!codigoFuncionario || !dataAgendamento || !horaAgendamento || !codigoloja || !servicoSelecionado) {
+      if (!codigoFuncionario || !dataAgendamento || !horaAgendamento || !codigoloja || !servicoSelecionado || !nomeCliente || comboServicos.selectedIndex === 0 || comboServicos.selectedIndex === 1 || !nomeCliente.trim()) {
         alert('Por favor, preencha todos os campos obrigatórios.');
         return;
       }
@@ -426,14 +453,23 @@
       }
     }
 
+    // Função para limpar a tabela de agendamentos
+    function limparTabela() {
+      const tbody = document.getElementById('agenda-body');
+      tbody.innerHTML = '';
+    }
+
     function atualizarTela() {
+      // Limpa o formulário
+      const form = document.getElementById('formAgendamento');
+      form.reset();
+
+      limparTabela();
       // Atualiza os combos e a tabela de agendamentos
-      const comboFuncionarios = document.getElementById('comboFuncionarios');
-      comboFuncionarios.selectedIndex = 0;
       carregarLojas();
-      carregarHorarios();
+     // carregarHorarios();
       carregarServicos();
-      carregarAgendamentos(null, null, null, null);
+     // carregarAgendamentos(null, null, null, null);
       renderizarTabela();
     }
 
