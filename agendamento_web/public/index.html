@@ -453,23 +453,16 @@
       }
     }
 
-    // Função para limpar a tabela de agendamentos
-    function limparTabela() {
-      const tbody = document.getElementById('agenda-body');
-      tbody.innerHTML = '';
-    }
-
     function atualizarTela() {
       // Limpa o formulário
       const form = document.getElementById('formAgendamento');
       form.reset();
 
-      limparTabela();
       // Atualiza os combos e a tabela de agendamentos
       carregarLojas();
-     // carregarHorarios();
+      // carregarHorarios();
       carregarServicos();
-     // carregarAgendamentos(null, null, null, null);
+      // carregarAgendamentos(null, null, null, null);
       renderizarTabela();
     }
 
