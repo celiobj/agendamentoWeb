@@ -2,6 +2,75 @@
 let agendamentos = [];
 let loading = false;
 
+// --- INÍCIO: BLOCO DE LOGIN ---
+function mostrarLogin() {
+  const loginDiv = document.createElement('div');
+  loginDiv.id = 'loginDiv';
+  loginDiv.style.position = 'fixed';
+  loginDiv.style.top = '0';
+  loginDiv.style.left = '0';
+  loginDiv.style.width = '100vw';
+  loginDiv.style.height = '100vh';
+  loginDiv.style.background = 'rgba(0,0,0,0.4)';
+  loginDiv.style.display = 'flex';
+  loginDiv.style.alignItems = 'center';
+  loginDiv.style.justifyContent = 'center';
+  loginDiv.innerHTML = `
+    <form id="loginForm" style="background:#fff;padding:2rem;border-radius:8px;box-shadow:0 2px 8px #0002;min-width:320px">
+      <h2 style="margin-bottom:1rem;text-align:center">Login</h2>
+      <div style="margin-bottom:1rem">
+        <label for="usuario" style="display:block;margin-bottom:0.25rem">Usuário</label>
+        <input type="text" id="usuario" name="usuario" style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px" autocomplete="username" />
+      </div>
+      <div style="margin-bottom:1rem">
+        <label for="senha" style="display:block;margin-bottom:0.25rem">Senha</label>
+        <input type="password" id="senha" name="senha" style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px" autocomplete="current-password" />
+      </div>
+      <div id="loginErro" style="color:#b00;margin-bottom:1rem;display:none"></div>
+      <button type="submit" style="width:100%;padding:0.5rem;background:#2563eb;color:#fff;border:none;border-radius:4px;font-weight:bold">OK</button>
+    </form>
+  `;
+  document.body.appendChild(loginDiv);
+
+  document.getElementById('loginForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const usuario = document.getElementById('usuario').value.trim();
+    const senha = document.getElementById('senha').value.trim();
+    const erroDiv = document.getElementById('loginErro');
+    erroDiv.style.display = 'none';
+
+    if (!usuario || !senha) {
+      erroDiv.textContent = 'Preencha usuário e senha.';
+      erroDiv.style.display = 'block';
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('http://127.0.0.1:1010/barber/usuarios/logar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: usuario, pass: senha })
+      });
+      const data = await res.json();
+      if (data && Object.keys(data).length > 0) {
+        // Login OK
+        document.body.removeChild(loginDiv);
+        // Você pode salvar o usuário logado em localStorage/sessionStorage se quiser
+      } else {
+        erroDiv.textContent = 'Usuário ou senha inválidos.';
+        erroDiv.style.display = 'block';
+      }
+    } catch (err) {
+      erroDiv.textContent = 'Erro ao tentar logar.';
+      erroDiv.style.display = 'block';
+    } finally {
+      setLoading(false);
+    }
+  });
+}
+// --- FIM: BLOCO DE LOGIN ---
+
 function setLoading(isLoading) {
   loading = isLoading;
   const loader = document.getElementById('loader');
@@ -89,6 +158,11 @@ function renderizarTabela() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  mostrarLogin(); // Exibe o form de login ao carregar a página
+
+  // O restante só será executado após login bem-sucedido
+  // Por isso, coloque dentro de uma função e chame após login OK, ou deixe como está se não houver risco de acesso indevido
+
   carregarLojas();
   document.getElementById('comboLojas').addEventListener('change', function (e) {
     const valorSelecionado = e.target.value;
