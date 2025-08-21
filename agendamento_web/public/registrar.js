@@ -136,59 +136,65 @@ document.addEventListener('DOMContentLoaded', () => {
   carregarServicos();
   document.getElementById('comboLojas').addEventListener('change', carregarFuncionarios);
   document.getElementById('comboFuncionarios').addEventListener('change', function () {});
-  document.getElementById('btnVisualizarHorarios').addEventListener('click', carregarHorarios);
+  const btnHorarios = document.getElementById('btnVisualizarHorarios');
+  if (btnHorarios) {
+    btnHorarios.addEventListener('click', carregarHorarios);
+  }
 
-  document.getElementById('formAgendamento').addEventListener('submit', async e => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const form = e.target;
-      const funcionarioSelecionado = document.getElementById('comboFuncionarios').value;
-      const codigoFuncionario = parseInt(funcionarioSelecionado.split('-')[0], 10);
-      const dataInput = document.getElementById('data').value;
-      let dataAgendamento = '';
-      if (dataInput) {
-        const [ano, mes, dia] = dataInput.split('-');
-        dataAgendamento = `${mes}-${dia}-${ano}`;
-      }
-      const horaAgendamento = document.getElementById('comboHorario').value;
-      const lojaSelecionada = document.getElementById('comboLojas').value;
-      const codigoloja = parseInt(lojaSelecionada.split('-')[0], 10);
-      const comboServicos = document.getElementById('comboServicos');
-      const nomeCliente = document.getElementById('cliente').value;
-      const servicoSelecionado = comboServicos.options[comboServicos.selectedIndex].text + ' - ' + nomeCliente;
-      if (!codigoFuncionario || !dataAgendamento || !horaAgendamento || !codigoloja || !servicoSelecionado || !nomeCliente || comboServicos.selectedIndex === 0 || comboServicos.selectedIndex === 1 || !nomeCliente.trim()) {
-        alert('Por favor, preencha todos os campos obrigatórios.');
-        return;
-      }
-      const body = {
-        "codigoAgendamento": 0,
-        "codigoFuncionario": codigoFuncionario,
-        "codigoCliente": 0,
-        "data": dataAgendamento,
-        "hora": horaAgendamento,
-        "isAtivo": "S",
-        "codigoLoja": codigoloja,
-        "colunaDia": 100,
-        "colunaHora": 100,
-        "descricao": servicoSelecionado
-      };
-      const API_URL = 'http://127.0.0.1:1010/agendamentos/realizarAgendamento';
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (res.ok) {
-        alert('Agendamento salvo com sucesso!');
-        form.reset();
-      } else {
+  const formAgendamento = document.getElementById('formAgendamento');
+  if (formAgendamento) {
+    formAgendamento.addEventListener('submit', async e => {
+      e.preventDefault();
+      setLoading(true);
+      try {
+        const form = e.target;
+        const funcionarioSelecionado = document.getElementById('comboFuncionarios').value;
+        const codigoFuncionario = parseInt(funcionarioSelecionado.split('-')[0], 10);
+        const dataInput = document.getElementById('data').value;
+        let dataAgendamento = '';
+        if (dataInput) {
+          const [ano, mes, dia] = dataInput.split('-');
+          dataAgendamento = `${mes}-${dia}-${ano}`;
+        }
+        const horaAgendamento = document.getElementById('comboHorario').value;
+        const lojaSelecionada = document.getElementById('comboLojas').value;
+        const codigoloja = parseInt(lojaSelecionada.split('-')[0], 10);
+        const comboServicos = document.getElementById('comboServicos');
+        const nomeCliente = document.getElementById('cliente').value;
+        const servicoSelecionado = comboServicos.options[comboServicos.selectedIndex].text + ' - ' + nomeCliente;
+        if (!codigoFuncionario || !dataAgendamento || !horaAgendamento || !codigoloja || !servicoSelecionado || !nomeCliente || comboServicos.selectedIndex === 0 || comboServicos.selectedIndex === 1 || !nomeCliente.trim()) {
+          alert('Por favor, preencha todos os campos obrigatórios.');
+          return;
+        }
+        const body = {
+          "codigoAgendamento": 0,
+          "codigoFuncionario": codigoFuncionario,
+          "codigoCliente": 0,
+          "data": dataAgendamento,
+          "hora": horaAgendamento,
+          "isAtivo": "S",
+          "codigoLoja": codigoloja,
+          "colunaDia": 100,
+          "colunaHora": 100,
+          "descricao": servicoSelecionado
+        };
+        const API_URL = 'http://127.0.0.1:1010/agendamentos/realizarAgendamento';
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (res.ok) {
+          alert('Agendamento salvo com sucesso!');
+          form.reset();
+        } else {
+          alert('Erro ao salvar agendamento!');
+        }
+      } catch (err) {
         alert('Erro ao salvar agendamento!');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      alert('Erro ao salvar agendamento!');
-    } finally {
-      setLoading(false);
-    }
-  });
+    });
+  }
 });
