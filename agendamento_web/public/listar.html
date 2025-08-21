@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Listar Agendamentos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    #loader {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      color: #2563eb;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+  <div id="loader" class="flex">Carregando...</div>
+  <h1 class="text-3xl font-bold mb-6">Agendamentos</h1>
+  <div class="w-full max-w-4xl mb-4">
+    <label for="comboLojas" class="block mb-1 font-medium">Loja</label>
+    <select id="comboLojas" class="p-2 border rounded w-full" aria-label="Selecione uma loja">
+      <option value="">Selecione uma loja</option>
+    </select>
+  </div>
+  <div class="w-full max-w-4xl mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label for="filtroData" class="block mb-1 font-medium">Filtrar por data</label>
+      <input id="filtroData" type="date" class="p-2 border rounded w-full" placeholder="Filtrar por data" />
+    </div>
+    <div>
+      <label for="filtroServico" class="block mb-1 font-medium">Filtrar por serviço</label>
+      <input id="filtroServico" type="text" class="p-2 border rounded w-full" placeholder="Filtrar por serviço" />
+    </div>
+  </div>
+    <div class="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 overflow-x-auto border border-blue-100">
+    <table class="table-auto w-full border-collapse">
+      <thead>
+        <tr class="bg-blue-500 text-white">
+            <th class="px-4 py-3 text-left font-semibold">Cliente</th>
+            <th class="px-4 py-3 text-left font-semibold">Serviço</th>
+            <th class="px-4 py-3 text-left font-semibold">Data</th>
+            <th class="px-4 py-3 text-left font-semibold">Horário</th>
+            <th class="px-4 py-3 text-left font-semibold">Descrição</th>
+        </tr>
+      </thead>
+      <tbody id="agenda-body" class="text-gray-700">
+      </tbody>
+    </table>
+  </div>
+  <a href="registrar.html" class="mt-6 bg-green-500 text-white px-4 py-2 rounded">Novo Agendamento</a>
+  <script src="listar.js"></script>
+</body>
+</html>
