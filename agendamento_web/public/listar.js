@@ -175,4 +175,3 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('filtroServico').addEventListener('input', renderizarTabela);
 });
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/js-md5/0.7.3/md5.min.js"></script>

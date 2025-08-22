@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,8 +10,11 @@
     #loader {
       display: none;
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255,255,255,0.7);
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.7);
       z-index: 1000;
       justify-content: center;
       align-items: center;
@@ -19,6 +23,7 @@
     }
   </style>
 </head>
+
 <body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
   <div id="loader" class="flex">Carregando...</div>
   <h1 class="text-3xl font-bold mb-6">Agendamentos</h1>
@@ -38,15 +43,15 @@
       <input id="filtroServico" type="text" class="p-2 border rounded w-full" placeholder="Filtrar por serviço" />
     </div>
   </div>
-    <div class="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 overflow-x-auto border border-blue-100">
+  <div class="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 overflow-x-auto border border-blue-100">
     <table class="table-auto w-full border-collapse">
       <thead>
         <tr class="bg-blue-500 text-white">
-            <th class="px-4 py-3 text-left font-semibold">Cliente</th>
-            <th class="px-4 py-3 text-left font-semibold">Serviço</th>
-            <th class="px-4 py-3 text-left font-semibold">Data</th>
-            <th class="px-4 py-3 text-left font-semibold">Horário</th>
-            <th class="px-4 py-3 text-left font-semibold">Descrição</th>
+          <th class="px-4 py-3 text-left font-semibold">Cliente</th>
+          <th class="px-4 py-3 text-left font-semibold">Serviço</th>
+          <th class="px-4 py-3 text-left font-semibold">Data</th>
+          <th class="px-4 py-3 text-left font-semibold">Horário</th>
+          <th class="px-4 py-3 text-left font-semibold">Descrição</th>
         </tr>
       </thead>
       <tbody id="agenda-body" class="text-gray-700">
@@ -54,6 +59,9 @@
     </table>
   </div>
   <a href="registrar.html" class="mt-6 bg-green-500 text-white px-4 py-2 rounded">Novo Agendamento</a>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-md5/0.7.3/md5.min.js"></script>
   <script src="listar.js"></script>
 </body>
+
 </html>
