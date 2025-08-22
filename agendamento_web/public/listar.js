@@ -2,6 +2,20 @@
 let agendamentos = [];
 let loading = false;
 
+// Função para gerar hash MD5 em JavaScript
+function criptografarSenha(senha) {
+  // Função utilitária para converter ArrayBuffer em string hexadecimal
+  function toHex(buffer) {
+    return Array.prototype.map.call(
+      new Uint8Array(buffer),
+      x => ('00' + x.toString(16)).slice(-2)
+    ).join('').toUpperCase();
+  }
+  // O método nativo do browser é assíncrono
+  return window.crypto.subtle.digest('MD5', new TextEncoder().encode(senha))
+    .then(toHex);
+}
+
 // --- INÍCIO: BLOCO DE LOGIN ---
 function mostrarLogin() {
   const loginDiv = document.createElement('div');
@@ -47,8 +61,9 @@ function mostrarLogin() {
 
     setLoading(true);
     try {
-      // Corrigido para GET e parâmetros na URL
-      const url = `http://127.0.0.1:1010/barber/usuarios/logar?user=${encodeURIComponent(usuario)}&pass=${encodeURIComponent(senha)}`;
+      // Criptografa a senha antes de enviar
+      const senhaCriptografada = await criptografarSenha(senha);
+      const url = `http://127.0.0.1:1010/barber/usuarios/logar?user=${encodeURIComponent(usuario)}&pass=${encodeURIComponent(senhaCriptografada)}`;
       const res = await fetch(url, { method: 'GET' });
       const data = await res.json();
       if (data && Object.keys(data).length > 0) {
@@ -126,32 +141,6 @@ async function carregarAgendamentos(codigoloja) {
     setLoading(false);
   }
 }
-
-public static String criptografarSenha(String senha) {
-        MessageDigest algorithm = null;
-
-        try {
-            algorithm = MessageDigest.getInstance("MD5");
-
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(Util.class
-                    .getName()).log(Level.SEVERE, null, ex);
-        }
-        byte messageDigest[] = null;
-
-        try {
-            messageDigest = algorithm.digest(senha.getBytes("UTF-8"));
-
-        } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(Util.class
-                    .getName()).log(Level.SEVERE, null, ex);
-        }
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : messageDigest) {
-            hexString.append(String.format("%02X", 0xFF & b));
-        }
-        return hexString.toString();
-    }
 
 function renderizarTabela() {
   const tbody = document.getElementById('agenda-body');
