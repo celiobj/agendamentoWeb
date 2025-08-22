@@ -2,18 +2,9 @@
 let agendamentos = [];
 let loading = false;
 
-// Função para gerar hash MD5 em JavaScript
+// Função para gerar hash MD5 em JavaScript usando a biblioteca js-md5
 function criptografarSenha(senha) {
-  // Função utilitária para converter ArrayBuffer em string hexadecimal
-  function toHex(buffer) {
-    return Array.prototype.map.call(
-      new Uint8Array(buffer),
-      x => ('00' + x.toString(16)).slice(-2)
-    ).join('').toUpperCase();
-  }
-  // O método nativo do browser é assíncrono
-  return window.crypto.subtle.digest('MD5', new TextEncoder().encode(senha))
-    .then(toHex);
+  return md5(senha).toUpperCase();
 }
 
 // --- INÍCIO: BLOCO DE LOGIN ---
@@ -62,14 +53,12 @@ function mostrarLogin() {
     setLoading(true);
     try {
       // Criptografa a senha antes de enviar
-      const senhaCriptografada = await criptografarSenha(senha);
+      const senhaCriptografada = criptografarSenha(senha);
       const url = `http://127.0.0.1:1010/barber/usuarios/logar?user=${encodeURIComponent(usuario)}&pass=${encodeURIComponent(senhaCriptografada)}`;
       const res = await fetch(url, { method: 'GET' });
       const data = await res.json();
       if (data && Object.keys(data).length > 0) {
-        // Login OK
         document.body.removeChild(loginDiv);
-        // Você pode salvar o usuário logado em localStorage/sessionStorage se quiser
       } else {
         erroDiv.textContent = 'Usuário ou senha inválidos.';
         erroDiv.style.display = 'block';
@@ -185,3 +174,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('filtroData').addEventListener('input', renderizarTabela);
   document.getElementById('filtroServico').addEventListener('input', renderizarTabela);
 });
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-md5/0.7.3/md5.min.js"></script>
